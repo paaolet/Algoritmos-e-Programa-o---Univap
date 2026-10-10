@@ -1,0 +1,542 @@
+algoritmo "UniLibrary - Sistema de Gerenciamento de Biblioteca"
+
+const
+   MAX_LIVROS = 40
+   MAX_CATEGORIAS = 5
+   TECNOLOGIA = 1
+   EXATAS = 2
+   HUMANAS = 3
+   NEGOCIOS = 4
+   LITERATURA = 5
+   EMPRESTIMO = 1
+   DEVOLUCAO = 2
+   DISPONIVEL = 1
+   INDISPONIVEL = 0
+   ANO_MINIMO = 1450
+   ANO_MAXIMO = 2100
+
+tipo
+   Livro = registro
+      codigo: inteiro
+      titulo: caractere
+      autor: caractere
+      ano: inteiro
+      categoria: inteiro
+      qtdTotal: inteiro
+      qtdDisponivel: inteiro
+      qtdEmprestimos: inteiro
+      status: inteiro
+   fimregistro
+
+var
+   acervo: vetor[1..MAX_LIVROS] de Livro
+   movimentacoes: vetor[1..MAX_CATEGORIAS, 1..2] de inteiro
+   qtdLivros: inteiro
+   opcao: inteiro
+
+procedimento exibirNomeCategoria(categoria: inteiro)
+inicio
+   escolha categoria
+      caso TECNOLOGIA
+         escreva("Tecnologia")
+      caso EXATAS
+         escreva("Ciencias Exatas")
+      caso HUMANAS
+         escreva("Ciencias Humanas")
+      caso NEGOCIOS
+         escreva("Administracao e Negocios")
+      caso LITERATURA
+         escreva("Literatura")
+      outrocaso
+         escreva("Categoria invalida")
+   fimescolha
+fimprocedimento
+
+funcao buscaRecursiva(codigo, posicaoAtual, quantidade: inteiro): inteiro
+inicio
+   se posicaoAtual > quantidade entao
+      retorne 0
+   senao
+      se acervo[posicaoAtual].codigo = codigo entao
+         retorne posicaoAtual
+      senao
+         retorne buscaRecursiva(codigo, posicaoAtual + 1, quantidade)
+      fimse
+   fimse
+fimfuncao
+
+procedimento inicializar
+var
+   i, j: inteiro
+inicio
+   qtdLivros <- 0
+   para i de 1 ate MAX_CATEGORIAS faca
+      para j de 1 ate 2 faca
+         movimentacoes[i,j] <- 0
+      fimpara
+   fimpara
+fimprocedimento
+
+procedimento exibirLivro(posicao: inteiro)
+inicio
+   escreval("Codigo: ", acervo[posicao].codigo)
+   escreval("Titulo: ", acervo[posicao].titulo)
+   escreval("Autor: ", acervo[posicao].autor)
+   escreval("Ano de publicacao: ", acervo[posicao].ano)
+   escreva("Categoria: ")
+   exibirNomeCategoria(acervo[posicao].categoria)
+   escreval("")
+   escreval("Exemplares totais: ", acervo[posicao].qtdTotal)
+   escreval("Exemplares disponiveis: ", acervo[posicao].qtdDisponivel)
+   escreval("Exemplares emprestados: ", acervo[posicao].qtdTotal - acervo[posicao].qtdDisponivel)
+   escreval("Emprestimos realizados: ", acervo[posicao].qtdEmprestimos)
+   se acervo[posicao].status = DISPONIVEL entao
+      escreval("Status: DISPONIVEL")
+   senao
+      escreval("Status: INDISPONIVEL")
+   fimse
+fimprocedimento
+
+procedimento cadastrarLivro
+var
+   novo: Livro
+   i, posh, categoria, ano, quantidade: inteiro
+   deslocar: logico
+   duplicado: logico
+inicio
+   se qtdLivros >= MAX_LIVROS entao
+      escreval("Acervo cheio. Limite de ", MAX_LIVROS, " livros.")
+   senao
+      escreval("--- CADASTRO DE LIVRO ---")
+      escreva("Codigo numerico unico: ")
+      leia(novo.codigo)
+      duplicado <- falso
+      para i de 1 ate qtdLivros faca
+         se acervo[i].codigo = novo.codigo entao
+            duplicado <- verdadeiro
+         fimse
+      fimpara
+      se duplicado entao
+         escreval("Erro: ja existe um livro com esse codigo.")
+      senao
+         escreva("Titulo: ")
+         leia(novo.titulo)
+         escreva("Autor: ")
+         leia(novo.autor)
+         escreva("Ano de publicacao (", ANO_MINIMO, " a ", ANO_MAXIMO, "): ")
+         leia(ano)
+         enquanto (ano < ANO_MINIMO) ou (ano > ANO_MAXIMO) faca
+            escreval("Ano invalido.")
+            escreva("Digite novamente: ")
+            leia(ano)
+         fimenquanto
+         escreval("Categorias: 1-Tecnologia 2-Exatas 3-Humanas 4-Administracao 5-Literatura")
+         escreva("Categoria: ")
+         leia(categoria)
+         enquanto (categoria < 1) ou (categoria > MAX_CATEGORIAS) faca
+            escreva("Categoria invalida. Digite de 1 a 5: ")
+            leia(categoria)
+         fimenquanto
+         escreva("Quantidade total de exemplares (maior que zero): ")
+         leia(quantidade)
+         enquanto quantidade <= 0 faca
+            escreva("Quantidade invalida. Digite um valor positivo: ")
+            leia(quantidade)
+         fimenquanto
+
+         novo.ano <- ano
+         novo.categoria <- categoria
+         novo.qtdTotal <- quantidade
+         novo.qtdDisponivel <- quantidade
+         novo.qtdEmprestimos <- 0
+         novo.status <- DISPONIVEL
+
+
+         posh <- qtdLivros + 1
+         deslocar <- verdadeiro
+         enquanto (posh > 1) e deslocar faca
+            se acervo[posh - 1].codigo > novo.codigo entao
+               acervo[posh] <- acervo[posh - 1]
+               posh <- posh - 1
+            senao
+               deslocar <- falso
+            fimse
+         fimenquanto
+         acervo[posh] <- novo
+         qtdLivros <- qtdLivros + 1
+         escreval("Livro cadastrado com sucesso.")
+      fimse
+   fimse
+fimprocedimento
+
+procedimento listarAcervo
+var
+   i: inteiro
+inicio
+   se qtdLivros = 0 entao
+      escreval("O acervo esta vazio.")
+   senao
+      escreval("========== ACERVO CADASTRADO ==========")
+      para i de 1 ate qtdLivros faca
+         escreval("---------------------------------------")
+         exibirLivro(i)
+      fimpara
+   fimse
+fimprocedimento
+
+procedimento consultarLivro
+var
+   codigo, posh, i: inteiro
+inicio
+   se qtdLivros = 0 entao
+      escreval("Nao ha livros cadastrados para consulta.")
+   senao
+      escreva("Informe o codigo do livro: ")
+      leia(codigo)
+
+
+      posh <- 0
+      para i de 1 ate qtdLivros faca
+         se acervo[i].codigo = codigo entao
+            posh <- i
+         fimse
+      fimpara
+
+      se posh = 0 entao
+         escreval("Livro nao encontrado para o codigo ", codigo, ".")
+         escreval("Codigos cadastrados e suas posicoes:")
+         para i de 1 ate qtdLivros faca
+            escreval("Posicao ", i, " - Codigo ", acervo[i].codigo, " - ", acervo[i].titulo)
+         fimpara
+      senao
+         escreval("Livro encontrado na posicao ", posh, " do vetor.")
+         exibirLivro(posh)
+      fimse
+   fimse
+fimprocedimento
+
+procedimento realizarEmprestimo
+var
+   codigo, posh, categoria, i: inteiro
+inicio
+   escreva("Codigo do livro para emprestimo: ")
+   leia(codigo)
+
+   posh <- 0
+   para i de 1 ate qtdLivros faca
+      se acervo[i].codigo = codigo entao
+         posh <- i
+      fimse
+   fimpara
+
+   se posh = 0 entao
+      escreval("Livro nao encontrado.")
+   senao
+      se (acervo[posh].qtdDisponivel > 0) e (acervo[posh].status = DISPONIVEL) entao
+         acervo[posh].qtdDisponivel <- acervo[posh].qtdDisponivel - 1
+         acervo[posh].qtdEmprestimos <- acervo[posh].qtdEmprestimos + 1
+         categoria <- acervo[posh].categoria
+         movimentacoes[categoria, EMPRESTIMO] <- movimentacoes[categoria, EMPRESTIMO] + 1
+         se acervo[posh].qtdDisponivel = 0 entao
+            acervo[posh].status <- INDISPONIVEL
+         fimse
+         escreval("Emprestimo registrado com sucesso.")
+      senao
+         escreval("Emprestimo nao realizado: nao ha exemplares disponiveis.")
+      fimse
+   fimse
+fimprocedimento
+
+procedimento realizarDevolucao
+var
+   codigo, posh, categoria, i: inteiro
+inicio
+   escreva("Codigo do livro para devolucao: ")
+   leia(codigo)
+
+   posh <- 0
+   para i de 1 ate qtdLivros faca
+      se acervo[i].codigo = codigo entao
+         posh <- i
+      fimse
+   fimpara
+
+   se posh = 0 entao
+      escreval("Livro nao encontrado.")
+   senao
+      se (acervo[posh].qtdTotal - acervo[posh].qtdDisponivel) > 0 entao
+         se acervo[posh].qtdDisponivel < acervo[posh].qtdTotal entao
+            acervo[posh].qtdDisponivel <- acervo[posh].qtdDisponivel + 1
+            acervo[posh].status <- DISPONIVEL
+            categoria <- acervo[posh].categoria
+            movimentacoes[categoria, DEVOLUCAO] <- movimentacoes[categoria, DEVOLUCAO] + 1
+            escreval("Devolucao registrada com sucesso.")
+         senao
+            escreval("Devolucao invalida: todos os exemplares ja estao disponiveis.")
+         fimse
+      senao
+         escreval("Devolucao invalida: nao ha exemplar emprestado.")
+      fimse
+   fimse
+fimprocedimento
+
+procedimento exibirDisponiveis
+var
+   i, encontrados: inteiro
+inicio
+   encontrados <- 0
+   escreval("========== LIVROS DISPONIVEIS ==========")
+
+   se qtdLivros = 0 entao
+      escreval("Nao ha livros cadastrados no acervo.")
+   senao
+      i <- 1
+      enquanto i <= qtdLivros faca
+
+         se acervo[i].qtdDisponivel > 0 entao
+            acervo[i].status <- DISPONIVEL
+            escreval("Posicao no vetor: ", i)
+            escreval("Codigo: ", acervo[i].codigo)
+            escreval("Titulo: ", acervo[i].titulo)
+            escreval("Autor: ", acervo[i].autor)
+            escreval("Exemplares disponiveis: ", acervo[i].qtdDisponivel)
+            escreval("---------------------------------------")
+            encontrados <- encontrados + 1
+         senao
+            acervo[i].status <- INDISPONIVEL
+         fimse
+         i <- i + 1
+      fimenquanto
+
+      se encontrados = 0 entao
+         escreval("Nenhum livro disponivel no momento.")
+      senao
+         escreval("Total de livros com exemplares disponiveis: ", encontrados)
+      fimse
+   fimse
+fimprocedimento
+
+procedimento rankingAcervo
+var
+   ranking: vetor[1..MAX_LIVROS] de Livro
+   temporario: Livro
+   i, j, k: inteiro
+   trocar: logico
+inicio
+   se qtdLivros = 0 entao
+      escreval("Nao ha livros para montar o ranking. Cadastre livros primeiro.")
+   senao
+      para i de 1 ate qtdLivros faca
+         ranking[i] <- acervo[i]
+      fimpara
+
+
+      se qtdLivros > 1 entao
+         para i de 1 ate qtdLivros - 1 faca
+            para j de 1 ate qtdLivros - i faca
+               k <- j + 1
+               trocar <- falso
+
+               se ranking[j].qtdEmprestimos < ranking[k].qtdEmprestimos entao
+                  trocar <- verdadeiro
+               senao
+                  se ranking[j].qtdEmprestimos = ranking[k].qtdEmprestimos entao
+                     se ranking[j].qtdDisponivel > ranking[k].qtdDisponivel entao
+                        trocar <- verdadeiro
+                     senao
+                        se ranking[j].qtdDisponivel = ranking[k].qtdDisponivel entao
+                           se ranking[j].codigo > ranking[k].codigo entao
+                              trocar <- verdadeiro
+                           fimse
+                        fimse
+                     fimse
+                  fimse
+               fimse
+
+               se trocar entao
+                  temporario <- ranking[j]
+                  ranking[j] <- ranking[k]
+                  ranking[k] <- temporario
+               fimse
+            fimpara
+         fimpara
+      fimse
+
+      escreval("========== RANKING DO ACERVO ==========")
+      escreval("Rank | Codigo | Titulo | Autor | Emprestimos | Disponiveis")
+      para i de 1 ate qtdLivros faca
+         escreva(i, " | ")
+         escreva(ranking[i].codigo, " | ")
+         escreva(ranking[i].titulo, " | ")
+         escreva(ranking[i].autor, " | ")
+         escreva(ranking[i].qtdEmprestimos, " | ")
+         escreval(ranking[i].qtdDisponivel)
+      fimpara
+   fimse
+fimprocedimento
+
+procedimento exibirEstatisticas
+var
+   i, j: inteiro
+   totalExemplares, disponiveis, emprestados, totalEmprestimos, totalDevolucoes: inteiro
+   livrosCategoria: vetor[1..MAX_CATEGORIAS] de inteiro
+   emprestimosCategoria: vetor[1..MAX_CATEGORIAS] de inteiro
+   devolucoesCategoria: vetor[1..MAX_CATEGORIAS] de inteiro
+   maiorEmprestimos, maiorDisponiveis, posMaiorEmp, posMaiorDisp: inteiro
+   categoriaMaior, maiorEmpCategoria: inteiro
+   percentualDisp, percentualEmp, media: real
+inicio
+   totalExemplares <- 0
+   disponiveis <- 0
+   emprestados <- 0
+   totalEmprestimos <- 0
+   totalDevolucoes <- 0
+   para i de 1 ate MAX_CATEGORIAS faca
+      livrosCategoria[i] <- 0
+      emprestimosCategoria[i] <- movimentacoes[i, EMPRESTIMO]
+      devolucoesCategoria[i] <- movimentacoes[i, DEVOLUCAO]
+      totalEmprestimos <- totalEmprestimos + movimentacoes[i, EMPRESTIMO]
+      totalDevolucoes <- totalDevolucoes + movimentacoes[i, DEVOLUCAO]
+   fimpara
+
+   posMaiorEmp <- 0
+   posMaiorDisp <- 0
+   maiorEmprestimos <- -1
+   maiorDisponiveis <- -1
+
+   para i de 1 ate qtdLivros faca
+      totalExemplares <- totalExemplares + acervo[i].qtdTotal
+      disponiveis <- disponiveis + acervo[i].qtdDisponivel
+      emprestados <- emprestados + (acervo[i].qtdTotal - acervo[i].qtdDisponivel)
+      livrosCategoria[acervo[i].categoria] <- livrosCategoria[acervo[i].categoria] + 1
+      se acervo[i].qtdEmprestimos > maiorEmprestimos entao
+         maiorEmprestimos <- acervo[i].qtdEmprestimos
+         posMaiorEmp <- i
+      fimse
+      se acervo[i].qtdDisponivel > maiorDisponiveis entao
+         maiorDisponiveis <- acervo[i].qtdDisponivel
+         posMaiorDisp <- i
+      fimse
+   fimpara
+
+   escreval("========== ESTATISTICAS GERAIS ==========")
+   escreval("Livros cadastrados: ", qtdLivros)
+   escreval("Quantidade total de exemplares: ", totalExemplares)
+   escreval("Exemplares disponiveis: ", disponiveis)
+   escreval("Exemplares atualmente emprestados: ", emprestados)
+   escreval("Total de emprestimos realizados: ", totalEmprestimos)
+   escreval("Total de devolucoes realizadas: ", totalDevolucoes)
+
+   se totalExemplares > 0 entao
+      percentualDisp <- (disponiveis * 100.0) / totalExemplares
+      percentualEmp <- (emprestados * 100.0) / totalExemplares
+      escreval("Percentual disponivel: ", percentualDisp, "%")
+      escreval("Percentual emprestado: ", percentualEmp, "%")
+   senao
+      escreval("Percentuais indisponiveis: acervo sem exemplares.")
+   fimse
+
+   se qtdLivros > 0 entao
+      media <- totalExemplares / qtdLivros
+      escreval("Media de exemplares por livro: ", media)
+      escreval("Livro com mais emprestimos: ", acervo[posMaiorEmp].titulo, " (", acervo[posMaiorEmp].qtdEmprestimos, ")")
+      escreval("Livro com mais exemplares disponiveis: ", acervo[posMaiorDisp].titulo, " (", acervo[posMaiorDisp].qtdDisponivel, ")")
+   senao
+      escreval("Nao ha livros cadastrados para calcular medias ou destaques.")
+   fimse
+
+   escreval("--- Livros e movimentacoes por categoria ---")
+   escreval("Categoria | Livros | Emprestimos | Devolucoes")
+   para i de 1 ate MAX_CATEGORIAS faca
+      exibirNomeCategoria(i)
+      escreval(" | ", livrosCategoria[i], " | ", emprestimosCategoria[i], " | ", devolucoesCategoria[i])
+   fimpara
+
+   categoriaMaior <- 1
+   maiorEmpCategoria <- movimentacoes[1, EMPRESTIMO]
+   para i de 2 ate MAX_CATEGORIAS faca
+      se movimentacoes[i, EMPRESTIMO] > maiorEmpCategoria entao
+         maiorEmpCategoria <- movimentacoes[i, EMPRESTIMO]
+         categoriaMaior <- i
+      fimse
+   fimpara
+   escreva("Categoria com mais emprestimos: ")
+   exibirNomeCategoria(categoriaMaior)
+   escreval(" (", maiorEmpCategoria, ")")
+
+   escreval("--- Matriz de movimentacoes ---")
+   escreval("Categoria | Emprestimos | Devolucoes")
+   j <- 0
+   para i de 1 ate MAX_CATEGORIAS faca
+      exibirNomeCategoria(i)
+      escreval(" | ", movimentacoes[i, EMPRESTIMO], " | ", movimentacoes[i, DEVOLUCAO])
+      j <- j + movimentacoes[i, EMPRESTIMO] + movimentacoes[i, DEVOLUCAO]
+   fimpara
+   escreval("Total de movimentacoes na matriz: ", j)
+fimprocedimento
+
+procedimento buscaRecursivaMenu
+var
+   codigo, posh: inteiro
+inicio
+   se qtdLivros = 0 entao
+      escreval("Catalogo vazio. Cadastre um livro antes da busca.")
+   senao
+      escreva("Codigo para busca recursiva: ")
+      leia(codigo)
+      posh <- buscaRecursiva(codigo, 1, qtdLivros)
+      se posh = 0 entao
+         escreval("Busca recursiva: livro nao encontrado.")
+      senao
+         escreval("Livro encontrado pela busca recursiva na posicao ", posh, ".")
+         exibirLivro(posh)
+      fimse
+   fimse
+fimprocedimento
+
+inicio
+   inicializar
+   repita
+      escreval("")
+      escreval("==============================================")
+      escreval(" UNILIBRARY - SISTEMA DE GERENCIAMENTO")
+      escreval("==============================================")
+      escreval("1. Cadastrar livro")
+      escreval("2. Listar acervo")
+      escreval("3. Consultar livro")
+      escreval("4. Realizar emprestimo")
+      escreval("5. Realizar devolucao")
+      escreval("6. Exibir livros disponiveis")
+      escreval("7. Exibir ranking do acervo")
+      escreval("8. Exibir estatisticas")
+      escreval("9. Realizar busca recursiva")
+      escreval("10. Encerrar sistema")
+      escreva("Escolha uma opcao: ")
+      leia(opcao)
+
+      escolha opcao
+         caso 1
+            cadastrarLivro
+         caso 2
+            listarAcervo
+         caso 3
+            consultarLivro
+         caso 4
+            realizarEmprestimo
+         caso 5
+            realizarDevolucao
+         caso 6
+            exibirDisponiveis
+         caso 7
+            rankingAcervo
+         caso 8
+            exibirEstatisticas
+         caso 9
+            buscaRecursivaMenu
+         caso 10
+            escreval("Sistema encerrado. Obrigada por utilizar a UniLibrary!")
+         outrocaso
+            escreval("Opcao invalida. Escolha uma opcao de 1 a 10.")
+      fimescolha
+   ate opcao = 10
+fimalgoritmo
